@@ -1,9 +1,3 @@
-/* Leitura de QR Code pela câmera.
- *
- * O BarcodeDetector nativo só existe no Chrome/Edge de macOS, ChromeOS e
- * Android. No Windows (computador da portaria) usamos a biblioteca jsQR,
- * que decodifica a imagem em JavaScript e funciona em qualquer navegador.
- */
 function criarLeitorQr(video, aoLer) {
   let stream = null, timer = null, detector = null, ativo = false;
   const canvas = document.createElement('canvas');
@@ -35,7 +29,6 @@ function criarLeitorQr(video, aoLer) {
     return r ? r.data : null;
   }
 
-  // Um quadro por vez; enquanto aoLer() trabalha, a leitura fica pausada
   async function ciclo() {
     if (!ativo) return;
     if (video.readyState >= 2) {
@@ -63,6 +56,8 @@ function criarLeitorQr(video, aoLer) {
         video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
+      const { facingMode } = stream.getVideoTracks()[0].getSettings();
+      video.classList.toggle('espelhado', facingMode !== 'environment');
       video.srcObject = stream;
       await video.play();
       ativo = true;
