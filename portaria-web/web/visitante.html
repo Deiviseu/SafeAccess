@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
+<title>Registrar Visitante · SafeAccess Sacchelli</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="visitante">
+<div class="shell"><aside class="side" id="side"></aside><div class="conteudo"><header class="top" id="top"></header>
+<main id="main" hidden>
+<div class="cols">
+  <form class="card" id="form" novalidate>
+    <h2>Identificação</h2>
+    <div class="form-grid">
+      <label>Tipo de documento
+        <select name="documentoTipo" id="doc-tipo">
+          <option value="cpf">CPF</option><option value="rg">RG</option><option value="cnh">CNH</option>
+          <option value="passaporte">Passaporte</option><option value="outro">Outro</option>
+        </select>
+      </label>
+      <label>Número do documento<input name="documento" id="doc" required autocomplete="off" inputmode="numeric" maxlength="20"></label>
+      <p class="full info-doc muted" id="doc-info" role="status">Digite o documento: se a pessoa já veio antes, o cadastro é preenchido automaticamente.</p>
+      <label class="full">Nome completo<input name="nome" id="nome" required maxlength="150" autocomplete="off"></label>
+      <label>Tipo de visitante
+        <select name="tipo" id="tipo">
+          <option value="visitante">Visitante</option><option value="prestador">Prestador de serviço</option>
+          <option value="fornecedor">Fornecedor</option><option value="outro">Outro</option>
+        </select>
+      </label>
+      <label>Empresa de origem<input name="empresa" id="empresa" maxlength="150" autocomplete="off"></label>
+    </div>
+
+    <h2>Destino da visita</h2>
+    <div class="form-grid">
+      <label>Setor de destino<select name="setorId" id="setor"><option value="">Não informado</option></select></label>
+      <label>Pessoa visitada<input name="visitada" maxlength="120" autocomplete="off"></label>
+      <label class="full">Motivo<input name="motivo" maxlength="300" autocomplete="off"></label>
+      <label class="full">Observações<textarea name="observacao" rows="2" maxlength="500"></textarea></label>
+    </div>
+
+    <p id="msg" class="msg" role="alert"></p>
+    <div class="actions">
+      <button class="btn" id="limpar" type="button">Limpar</button>
+      <button class="btn btn-primary" id="enviar" type="submit">Registrar entrada</button>
+    </div>
+  </form>
+
+  <aside class="stack">
+    <section class="card">
+      <h2>Visitantes e terceiros dentro<span class="contador" id="externos-total">0</span></h2>
+      <ul class="recent" id="externos"></ul>
+    </section>
+    <div class="note"><strong>Dados protegidos (LGPD).</strong> Coletamos só o necessário para o controle de acesso. O documento completo nunca aparece em telas nem em relatórios.</div>
+  </aside>
+</div>
+</main></div></div>
+<script src="vendor/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/comum.js"></script>
+<script src="js/visitante.js"></script>
+</body>
+</html>

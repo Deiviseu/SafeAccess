@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
+<title>Operadores · SafeAccess Sacchelli</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="usuarios">
+<div class="shell"><aside class="side" id="side"></aside><div class="conteudo"><header class="top" id="top"></header>
+<main id="main" hidden>
+<section class="stats">
+  <div class="card stat"><span class="muted">Operadores</span><strong id="t-total">–</strong></div>
+  <div class="card stat"><span class="muted">Administradores ativos</span><strong id="t-admin">–</strong></div>
+  <div class="card stat"><span class="muted">Operadores ativos</span><strong id="t-ativos">–</strong></div>
+</section>
+
+<section class="card">
+  <h2>Operadores do sistema</h2>
+  <div class="toolbar">
+    <input class="grow" id="q" type="search" placeholder="Buscar por nome ou e-mail" aria-label="Buscar operador">
+    <select id="perfil" aria-label="Filtrar por perfil"><option value="">Todos os perfis</option></select>
+    <select id="status" aria-label="Filtrar por status"><option value="">Todos os status</option><option value="true">Ativo</option><option value="false">Inativo</option></select>
+    <button class="btn btn-primary" id="novo" type="button">Novo operador</button>
+  </div>
+  <div class="scroll"><table>
+    <thead><tr><th>Operador</th><th>Perfil</th><th>Status</th><th>Último acesso</th><th><span class="sr">Ações</span></th></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table></div>
+  <div class="pager"><span class="muted" id="info" role="status"></span><div><button class="btn" id="prev" type="button">Anterior</button><button class="btn" id="next" type="button">Próxima</button></div></div>
+</section>
+
+<dialog id="dlg-novo" aria-labelledby="dlg-novo-t">
+  <form id="form-novo" novalidate>
+    <h2 id="dlg-novo-t">Novo operador</h2>
+    <label>Nome completo<input name="nome" required maxlength="120" autocomplete="off"></label>
+    <label>E-mail<input name="email" type="email" required maxlength="254" autocomplete="off"></label>
+    <label>Perfil
+      <select name="perfil"><option value="porteiro">Porteiro</option><option value="rh">RH</option><option value="admin">Administrador</option></select>
+    </label>
+    <label>Senha inicial<input name="senha" type="password" required minlength="10" maxlength="72" autocomplete="new-password"></label>
+    <p class="muted">Mínimo de 10 caracteres. Entregue a senha pessoalmente ao operador.</p>
+    <p class="msg" id="msg-novo" role="alert"></p>
+    <div class="actions"><button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-primary" type="submit">Criar operador</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-editar" aria-labelledby="dlg-editar-t">
+  <form id="form-editar" novalidate>
+    <h2 id="dlg-editar-t">Editar operador</h2>
+    <div><strong id="ed-nome"></strong><div class="muted" id="ed-email"></div></div>
+    <label>Perfil
+      <select name="perfil" id="ed-perfil"><option value="porteiro">Porteiro</option><option value="rh">RH</option><option value="admin">Administrador</option></select>
+    </label>
+    <label class="check"><input type="checkbox" name="ativo" id="ed-ativo"> Acesso ativo</label>
+    <p class="muted">Operador inativo não consegue usar o sistema. O histórico dele é mantido.</p>
+    <p class="msg" id="msg-editar" role="alert"></p>
+    <div class="actions"><button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-primary" type="submit">Salvar</button></div>
+  </form>
+</dialog>
+</main></div></div>
+<script src="vendor/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/comum.js"></script>
+<script src="js/usuarios.js"></script>
+</body>
+</html>

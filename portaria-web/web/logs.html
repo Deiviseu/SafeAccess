@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
+<title>Histórico de Acessos · SafeAccess Sacchelli</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="logs">
+<div class="shell"><aside class="side" id="side"></aside><div class="conteudo"><header class="top" id="top"></header>
+<main id="main" hidden>
+<section class="stats">
+  <div class="card stat"><span class="muted">Entradas hoje</span><strong id="s-entradas">–</strong></div>
+  <div class="card stat"><span class="muted">Saídas hoje</span><strong id="s-saidas">–</strong></div>
+  <div class="card stat"><span class="muted">Dentro agora</span><strong id="s-dentro">–</strong></div>
+  <div class="card stat" id="s-12h-card"><span class="muted">Dentro há mais de 12 h</span><strong id="s-12h">–</strong></div>
+</section>
+
+<section class="card">
+  <h2>Movimentações</h2>
+  <div class="toolbar">
+    <input class="grow" id="q" type="search" placeholder="Buscar por nome, empresa ou matrícula" aria-label="Buscar por nome, empresa ou matrícula">
+    <label class="inline">De<input id="de" type="date"></label>
+    <label class="inline">Até<input id="ate" type="date"></label>
+    <select id="tipo" aria-label="Filtrar por tipo de pessoa">
+      <option value="">Todos os tipos</option><option value="funcionario">Funcionário</option><option value="visitante">Visitante</option>
+      <option value="prestador">Prestador de serviço</option><option value="fornecedor">Fornecedor</option><option value="outro">Outro</option>
+    </select>
+    <select id="situacao" aria-label="Filtrar por situação">
+      <option value="">Todas as situações</option><option value="dentro">Ainda dentro</option><option value="saiu">Já saiu</option>
+    </select>
+    <button class="btn" id="csv" type="button">Exportar CSV</button>
+  </div>
+  <div class="scroll"><table>
+    <thead><tr><th>Entrada</th><th>Saída</th><th>Pessoa</th><th>Tipo</th><th>Destino</th><th>Método</th><th>Registrado por</th></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table></div>
+  <div class="pager"><span class="muted" id="info" role="status"></span><div><button class="btn" id="prev" type="button">Anterior</button><button class="btn" id="next" type="button">Próxima</button></div></div>
+</section>
+</main></div></div>
+<script src="vendor/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/comum.js"></script>
+<script src="js/logs.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
+<title>Portaria · SafeAccess Sacchelli</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="leitor">
+<div class="shell"><aside class="side" id="side"></aside><div class="conteudo"><header class="top" id="top"></header>
+<main id="main" hidden>
+
+<section class="stats">
+  <div class="card stat"><span class="muted">Dentro agora</span><strong id="s-dentro">–</strong></div>
+  <div class="card stat"><span class="muted">Visitantes e terceiros dentro</span><strong id="s-externos">–</strong></div>
+  <div class="card stat"><span class="muted">Entradas hoje</span><strong id="s-entradas">–</strong></div>
+  <div class="card stat" id="s-12h-card"><span class="muted">Dentro há mais de 12 h</span><strong id="s-12h">–</strong></div>
+</section>
+
+<div class="cols">
+  <section class="card">
+    <div class="card-head"><h2>Câmera da portaria</h2><button class="btn btn-sm" id="cam-btn" type="button" hidden>Ativar câmera</button></div>
+    <div class="cam">
+      <span class="live" id="live" hidden>AO VIVO</span>
+      <video id="video" muted playsinline></video>
+      <div class="frame" aria-hidden="true"></div>
+      <span id="placeholder">Câmera desligada</span>
+    </div>
+    <p id="cam-status" class="muted" role="status">Iniciando leitor…</p>
+    <div id="resultado" class="resultado" role="alert" hidden></div>
+  </section>
+
+  <section class="card">
+    <h2>Registro manual</h2>
+    <label>Buscar pessoa<input id="busca" type="search" placeholder="Nome, matrícula ou documento" autocomplete="off"></label>
+    <ul class="pessoas" id="resultados" aria-live="polite"></ul>
+    <a class="btn btn-block" href="visitante.html">Novo visitante</a>
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Dentro da empresa agora<span class="contador" id="dentro-total">0</span></h2>
+    <input id="filtro-dentro" type="search" placeholder="Filtrar por nome ou empresa" aria-label="Filtrar pessoas dentro">
+  </div>
+  <div class="scroll"><table>
+    <thead><tr><th>Entrada</th><th>Pessoa</th><th>Tipo</th><th>Destino</th><th><span class="sr">Ações</span></th></tr></thead>
+    <tbody id="dentro"></tbody>
+  </table></div>
+</section>
+
+</main></div></div>
+<script src="vendor/supabase.js"></script>
+<script src="vendor/jsQR.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/comum.js"></script>
+<script src="js/leitor-qr.js"></script>
+<script src="js/leitor.js"></script>
+</body>
+</html>
