@@ -12,16 +12,16 @@ export default defineConfig({
       registerType: 'autoUpdate', // nova versão no Vercel = app atualiza sozinho
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'SafeAccess Sacchelli',
-        short_name: 'SafeAccess',
+       name: 'Portaria Inteligente · Aços F. Sacchelli',
+        short_name: 'Portaria',
         description: 'Cartão de acesso do funcionário da Aços F Sacchelli',
         lang: 'pt-BR',
         start_url: '/',
         scope: '/',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#0f2447',
-        theme_color: '#0f2447',
+        background_color: '#092B4C',
+        theme_color: '#092B4C',
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
