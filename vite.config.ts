@@ -12,7 +12,7 @@ export default defineConfig({
       registerType: 'autoUpdate', // nova versão no Vercel = app atualiza sozinho
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-       name: 'Portaria Inteligente · Aços F. Sacchelli',
+        name: 'Portaria Inteligente · Aços F. Sacchelli',
         short_name: 'Portaria',
         description: 'Cartão de acesso do funcionário da Aços F Sacchelli',
         lang: 'pt-BR',
@@ -30,4 +30,9 @@ export default defineConfig({
       },
       workbox: {
         // guarda só os arquivos do app; chamadas ao Supabase (login, QR) nunca ficam em cache
-        globPatterns: ['**/*.{js,css,html,svg,png
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        navigateFallback: '/index.html',
+      },
+    }),
+  ],
+})
