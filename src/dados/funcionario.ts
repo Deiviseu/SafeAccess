@@ -71,6 +71,33 @@ export async function buscarUltimosAcessos(pessoaId: string, quantidade = 3): Pr
 }
 
 // ---------------------------------------------------------------------
+// Situação agora: dentro (entrada sem saída) ou fora da empresa.
+// Só serve para o app mostrar "entrada" ou "saída": quem decide de verdade
+// é o banco, na hora em que a portaria lê o QR (registrar_passagem).
+// ---------------------------------------------------------------------
+export type Situacao = { dentro: true; desde: string } | { dentro: false }
+
+export async function buscarSituacao(pessoaId: string): Promise<Situacao> {
+  const { data, error } = await supabase
+    .from('movimentacoes')
+    .select('entrada_em')
+    .eq('pessoa_id', pessoaId)
+    .is('saida_em', null)
+    .order('entrada_em', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  return data ? { dentro: true, desde: data.entrada_em } : { dentro: false }
+}
+
+// "2026-11-18T10:42:00Z" → "07:42" (hoje) ou "18 nov 2026 · 07:42" (outro dia)
+export function formatarDesde(iso: string) {
+  const d = new Date(iso)
+  const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  return d.toDateString() === new Date().toDateString() ? hora : formatarDataHora(iso)
+}
+
+// ---------------------------------------------------------------------
 // QR Code: a portaria já leu?
 // O banco grava em qr_tokens quando o QR é usado e liga à movimentação.
 // Se a entrada foi criada DEPOIS que o QR foi emitido, foi uma entrada;

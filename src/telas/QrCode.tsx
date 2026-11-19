@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Botao } from '../componentes/Botao'
 import { LayoutTela } from '../componentes/LayoutTela'
-import { verificarLeituraDoQr } from '../dados/funcionario'
+import { buscarSituacao, verificarLeituraDoQr, type Situacao } from '../dados/funcionario'
 import type { Funcionario } from '../dados/tipos'
 import type { QrGerado } from '../servicos/passkey'
 
@@ -25,6 +25,18 @@ export function QrCode({ funcionario }: { funcionario: Funcionario }) {
   const qr = useLocation().state?.qr as QrGerado | undefined
   const validade = qr?.validade_segundos ?? 60
   const [restante, setRestante] = useState(validade)
+  // Só para o título: "entrada" ou "saída". Quem decide é o banco, na leitura.
+  const [situacao, setSituacao] = useState<Situacao | null>(null)
+
+  useEffect(() => {
+    let ativo = true
+    buscarSituacao(funcionario.id)
+      .then((s) => ativo && setSituacao(s))
+      .catch(() => {})
+    return () => {
+      ativo = false
+    }
+  }, [funcionario.id])
 
   // Contagem regressiva (relógio do próprio celular, a partir do recebimento)
   useEffect(() => {
@@ -75,10 +87,17 @@ export function QrCode({ funcionario }: { funcionario: Funcionario }) {
   const porcentagem = (restante / validade) * 100
 
   return (
-    <LayoutTela titulo="Seu QR Code de acesso" comNavegacao>
+    <LayoutTela
+      titulo={situacao === null ? 'Seu QR Code de acesso' : situacao.dentro ? 'QR Code de saída' : 'QR Code de entrada'}
+      comNavegacao
+    >
       <div className="text-center">
         <h2 className="text-[19px] font-semibold text-marinho">Apresente o celular na portaria</h2>
-        <p className="mt-1 text-[14px] text-secundario">Mantenha o código visível para a leitura.</p>
+        <p className="mt-1 text-[14px] text-secundario">
+          {situacao === null
+            ? 'Mantenha o código visível para a leitura.'
+            : `A leitura vai registrar sua ${situacao.dentro ? 'saída' : 'entrada'}.`}
+        </p>
       </div>
 
       <div className="mx-auto mt-4 rounded-cartao bg-branco p-6">

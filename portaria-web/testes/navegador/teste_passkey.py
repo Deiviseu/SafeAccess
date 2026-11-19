@@ -84,11 +84,13 @@ with sync_playwright() as p:
 
     pg.get_by_role('button', name='Ir para o início').click()
     pg.wait_for_url(APP + '/inicio')
-    expect(pg.get_by_role('button', name='Solicitar acesso')).to_be_visible()
+    expect(pg.get_by_text('Você está fora da empresa')).to_be_visible()
+    expect(pg.get_by_role('button', name='Registrar entrada')).to_be_visible()
+    ok('início mostra "Você está fora" e o botão "Registrar entrada"')
 
     # ---------- 2. Gerar QR e passar na portaria (entrada) ----------
-    def gerar_qr():
-        pg.get_by_role('button', name='Solicitar acesso').click()
+    def gerar_qr(botao):
+        pg.get_by_role('button', name=botao).click()
         pg.wait_for_url(APP + '/biometria')
         with pg.expect_response(lambda r: 'app-passkey' in r.url and r.request.method == 'POST'
                                 and 'auth-verificar' in (r.request.post_data or '')) as resp:
@@ -98,8 +100,10 @@ with sync_playwright() as p:
         assert re.fullmatch(r'[0-9a-f]{64}', dados['token']) and dados['validade_segundos'] == 60, dados
         return dados['token']
 
-    token1 = gerar_qr()
+    token1 = gerar_qr('Registrar entrada')
     expect(pg.get_by_text(re.compile(r'Válido por 00:(5\d|60)'))).to_be_visible()
+    expect(pg.get_by_role('heading', name='QR Code de entrada')).to_be_visible()
+    expect(pg.get_by_text('A leitura vai registrar sua entrada.')).to_be_visible()
     expect(pg.locator('svg:has(title)')).to_have_count(1)
     pg.screenshot(path=f'{SHOTS}/31-qr-real.png')
     ok('Face ID confirmado pelo servidor → QR real de 60 s na tela')
@@ -118,7 +122,14 @@ with sync_playwright() as p:
     # ---------- 3. Saída ----------
     pg.get_by_role('button', name='Voltar ao início').click()
     expect(pg.locator('ul').first).to_contain_text('Entrada registrada')
-    token2 = gerar_qr()
+    expect(pg.get_by_text(re.compile(r'Você está dentro desde \d\d:\d\d'))).to_be_visible()
+    expect(pg.get_by_role('heading', name='Vai sair?')).to_be_visible()
+    pg.screenshot(path=f'{SHOTS}/34-inicio-dentro.png')
+    ok('depois da entrada: "Você está dentro desde HH:MM" e o botão vira "Registrar saída"')
+    token2 = gerar_qr('Registrar saída')
+    expect(pg.get_by_role('heading', name='QR Code de saída')).to_be_visible()
+    expect(pg.get_by_text('A leitura vai registrar sua saída.')).to_be_visible()
+    pg.screenshot(path=f'{SHOTS}/35-qr-saida.png')
     assert portaria_le(token2)['tipo'] == 'saida'
     expect(pg.get_by_role('heading', name='Saída registrada')).to_be_visible(timeout=8000)
     contador, uso = sql(f"select contador, ultimo_uso_em is not null from public.credenciais_passkey where pessoa_id = '{ana}'").split('|')
@@ -127,8 +138,21 @@ with sync_playwright() as p:
 
     # ---------- 4. Biometria recusada ----------
     pg.get_by_role('button', name='Voltar ao início').click()
+    expect(pg.get_by_text('Você está fora da empresa')).to_be_visible()
+
+    # Saída registrada pela portaria (manual) com o app aberto: ao voltar
+    # para o app, a tela atualiza sozinha
+    manual = f"select public.registrar_passagem('{ana}', 'manual', '{PORTEIRO}')"
+    sql(manual)  # entrada manual
+    pg.evaluate("document.dispatchEvent(new Event('visibilitychange'))")
+    expect(pg.get_by_role('button', name='Registrar saída')).to_be_visible()
+    sql(manual)  # saída manual
+    pg.evaluate("document.dispatchEvent(new Event('visibilitychange'))")
+    expect(pg.get_by_role('button', name='Registrar entrada')).to_be_visible()
+    ok('registro manual feito na portaria aparece no app ao voltar para ele')
+
     cdp.send('WebAuthn.setUserVerified', {'authenticatorId': autenticador, 'isUserVerified': False})
-    pg.get_by_role('button', name='Solicitar acesso').click()
+    pg.get_by_role('button', name='Registrar entrada').click()
     pg.get_by_role('button', name='Autenticar').click()
     pg.wait_for_url(APP + '/falha-autenticacao')
     expect(pg.get_by_role('heading', name='Não foi possível reconhecer')).to_be_visible()

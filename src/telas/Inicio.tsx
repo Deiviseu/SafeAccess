@@ -5,7 +5,7 @@ import { Botao } from '../componentes/Botao'
 import { CardFuncionario } from '../componentes/CardFuncionario'
 import { LayoutTela } from '../componentes/LayoutTela'
 import { Mensagem } from '../componentes/Mensagem'
-import { buscarUltimosAcessos, listarCelulares } from '../dados/funcionario'
+import { buscarSituacao, buscarUltimosAcessos, formatarDesde, listarCelulares, type Situacao } from '../dados/funcionario'
 import type { Funcionario, RegistroAcesso } from '../dados/tipos'
 
 // Figma: 02 · Início — com os dados reais do funcionário
@@ -18,20 +18,41 @@ export function Inicio({ funcionario }: { funcionario: Funcionario }) {
   const [acessos, setAcessos] = useState<RegistroAcesso[] | null>(null)
   const [erroAcessos, setErroAcessos] = useState(false)
   const [semCelular, setSemCelular] = useState(false)
+  // null = ainda não sabe se está dentro ou fora
+  const [situacao, setSituacao] = useState<Situacao | null>(null)
 
-  // Busca os últimos acessos ao abrir a tela
+  // Busca a situação e os últimos acessos ao abrir a tela e sempre que o app
+  // volta para a frente (a portaria pode ter registrado algo enquanto isso)
   useEffect(() => {
     let ativo = true
-    buscarUltimosAcessos(funcionario.id)
-      .then((lista) => ativo && setAcessos(lista))
-      .catch(() => ativo && setErroAcessos(true))
+    function atualizar() {
+      buscarSituacao(funcionario.id)
+        .then((s) => ativo && setSituacao(s))
+        .catch(() => ativo && setSituacao(null))
+      buscarUltimosAcessos(funcionario.id)
+        .then((lista) => {
+          if (!ativo) return
+          setAcessos(lista)
+          setErroAcessos(false)
+        })
+        .catch(() => ativo && setErroAcessos(true))
+    }
+    function aoVoltar() {
+      if (document.visibilityState === 'visible') atualizar()
+    }
+
+    atualizar()
     listarCelulares()
       .then((lista) => ativo && setSemCelular(lista.length === 0))
       .catch(() => {})
+    document.addEventListener('visibilitychange', aoVoltar)
     return () => {
       ativo = false // saiu da tela antes da resposta: ignora
+      document.removeEventListener('visibilitychange', aoVoltar)
     }
   }, [funcionario.id])
+
+  const dentro = situacao?.dentro === true
 
   return (
     <LayoutTela titulo={`Olá, ${funcionario.primeiroNome}.`} comNavegacao>
@@ -41,20 +62,28 @@ export function Inicio({ funcionario }: { funcionario: Funcionario }) {
         <Mensagem tipo="ativo">Cadastro ativo</Mensagem>
       </div>
 
-      {/* Cartão de destaque "Pronto para entrar?" */}
+      {/* Cartão de destaque: muda conforme a pessoa está dentro ou fora */}
       <section className="mt-6 rounded-cartao bg-marinho p-5 text-branco">
-        <p className="text-[11px] font-semibold tracking-wide text-amarelo uppercase">
-          Seu acesso, na palma da mão
+        <p className="text-[11px] font-semibold tracking-wide text-amarelo uppercase" aria-live="polite">
+          {situacao === null
+            ? 'Seu acesso, na palma da mão'
+            : situacao.dentro
+              ? `Você está dentro desde ${formatarDesde(situacao.desde)}`
+              : 'Você está fora da empresa'}
         </p>
-        <h2 className="mt-3 text-[24px] font-bold">Pronto para entrar?</h2>
-        <p className="mt-1 text-[15px] text-branco/85">Confirme sua identidade e gere seu QR Code.</p>
+        <h2 className="mt-3 text-[24px] font-bold">{dentro ? 'Vai sair?' : 'Pronto para entrar?'}</h2>
+        <p className="mt-1 text-[15px] text-branco/85">
+          {dentro
+            ? 'Confirme sua identidade e mostre o QR Code na portaria para registrar a saída.'
+            : 'Confirme sua identidade e gere seu QR Code.'}
+        </p>
         {semCelular ? (
           <p className="mt-4 rounded-campo bg-branco/10 p-3 text-[14px]">
             Antes, cadastre este celular: peça ao RH o QR Code de convite.
           </p>
         ) : (
           <Botao className="mt-4" onClick={() => navegar('/biometria')}>
-            Solicitar acesso
+            {situacao === null ? 'Solicitar acesso' : dentro ? 'Registrar saída' : 'Registrar entrada'}
           </Botao>
         )}
       </section>
