@@ -29,7 +29,7 @@ type TelaStatusProps = {
 
 export function TelaStatus({ tituloTela, Icone, tom, titulo, texto, conteudo, acoes, corTitulo }: TelaStatusProps) {
   return (
-    <LayoutTela titulo={tituloTela} rodape="Protótipo · sem validação real de acesso">
+    <LayoutTela titulo={tituloTela}>
       <div className="mt-4 flex flex-col items-center text-center">
         <div className={`flex size-28 items-center justify-center rounded-full ${cores[tom].circulo}`}>
           <Icone size={36} strokeWidth={1.8} aria-hidden />

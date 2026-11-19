@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { RotaProtegida } from './componentes/RotaProtegida'
 import { Biometria } from './telas/Biometria'
+import { Convite } from './telas/Convite'
 import { Inicio } from './telas/Inicio'
 import { Login } from './telas/Login'
 import { Perfil } from './telas/Perfil'
@@ -18,7 +19,8 @@ import {
 /*
   MAPA DO APP: cada endereço (path) mostra uma tela (element).
   Fluxo principal:
-  Login → (Trocar senha no 1º acesso) → Início → Biometria → QR Code → Resultado do acesso
+  Convite do RH → Login → (Trocar senha no 1º acesso) → Cadastrar celular
+  Início → Biometria → QR Code → Resultado do acesso (quando a portaria lê)
 */
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
       {/* Telas abertas (sem login) */}
       <Route path="/" element={<Login />} />
       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
+      {/* Link do QR que o RH mostra: cadastra o celular (pede login se precisar) */}
+      <Route path="/convite" element={<Convite />} />
 
       {/* Logado, mas fora da RotaProtegida: é o caminho obrigatório do 1º acesso */}
       <Route path="/trocar-senha" element={<TrocarSenha />} />

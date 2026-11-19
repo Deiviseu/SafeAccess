@@ -5,6 +5,7 @@ import { CampoTexto } from '../componentes/CampoTexto'
 import { Carregando } from '../componentes/Carregando'
 import { LayoutTela } from '../componentes/LayoutTela'
 import { Mensagem } from '../componentes/Mensagem'
+import { lerConvite } from '../dados/convite'
 import { useSessao } from '../sessao/useSessao'
 
 /*
@@ -42,7 +43,7 @@ export function TrocarSenha() {
     setEnviando(true)
     try {
       await trocarSenha(nova)
-      navegar('/inicio', { replace: true, state: { senhaTrocada: true } })
+      navegar(lerConvite() ? '/convite' : '/inicio', { replace: true, state: { senhaTrocada: true } })
     } catch (e) {
       setErro((e as Error).message)
     } finally {

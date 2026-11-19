@@ -1,12 +1,19 @@
-# SafeAccess · App do funcionário (protótipo)
+# SafeAccess · App do funcionário
 
 App do "cartão" do funcionário do sistema de portaria da **Aços F. Sacchelli**,
 feito a partir do protótipo do Figma (*Portaria Inteligente*).
 
-> **Situação:** o **login é real** (Supabase Auth, matrícula + senha criada pelo RH
-> na tela *Funcionários* da portaria), com troca de senha obrigatória no primeiro
-> acesso, dashboard e perfil com dados do banco. A **biometria e o QR Code ainda
-> são simulados** (próxima etapa: passkey + `emitir_qr_token`).
+> **Situação:** tudo real. Login com matrícula + senha criada pelo RH (tela
+> *Funcionários* da portaria), troca de senha no primeiro acesso, cadastro do
+> celular por convite com **Face ID/digital (passkey WebAuthn)**, **QR Code de uso
+> único (60 s)** gerado só depois da biometria e resultado na tela assim que a
+> portaria lê. A biometria nunca sai do celular: o servidor guarda só a chave pública.
+
+### Como o funcionário começa
+1. O RH cadastra o funcionário e clica em *Criar acesso* na portaria (senha inicial + QR de convite).
+2. O funcionário lê o QR do convite com a câmera do celular, entra com matrícula e senha,
+   cria a senha dele e confirma com a digital/rosto: **o celular fica cadastrado**.
+3. Na portaria: *Solicitar acesso* → biometria → QR na tela → a portaria lê → "Entrada autorizada".
 
 ## Como rodar
 
@@ -45,9 +52,10 @@ src/
 ├── App.tsx               MAPA do app: qual endereço mostra qual tela
 ├── index.css             Cores, fonte e cantos do design system do Figma
 ├── servicos/supabase.ts  Conexão com o Supabase (lê o .env)
-├── dados/funcionario.ts  Consultas: dados do funcionário e últimos acessos
+├── dados/funcionario.ts  Consultas: dados, últimos acessos, leitura do QR, celulares
 ├── dados/tipos.ts        Formatos dos dados (TypeScript)
-├── dados/demo.ts         O que ainda é simulado (validade do QR)
+├── dados/convite.ts      Token do convite (link do RH) enquanto a pessoa faz login
+├── servicos/passkey.ts   Face ID/digital (WebAuthn) e QR, via Edge Function app-passkey
 ├── sessao/               Quem está logado (Context API)
 ├── componentes/          Peças reutilizáveis = componentes do Figma
 │   ├── Botao.tsx             Botão/Primário, Secundário e Contorno
@@ -55,11 +63,11 @@ src/
 │   ├── CardFuncionario.tsx   Card/Funcionário
 │   ├── Mensagem.tsx          Mensagem/Ativo, Erro e Aviso
 │   ├── NavegacaoInferior.tsx Navegação/Início, Acesso e Perfil
-│   ├── Cabecalho.tsx         "PORTARIA INTELIGENTE" + título + Cenários
+│   ├── Cabecalho.tsx         "PORTARIA INTELIGENTE" + título
 │   ├── LayoutTela.tsx        Molde comum das telas internas
 │   ├── TelaStatus.tsx        Molde das telas de resultado (ícone + título)
-│   ├── Modal.tsx             Janela por cima (Cenários, Sair, Ajuda)
-│   ├── ModalCenarios.tsx     "Testar cenários" do protótipo
+│   ├── Modal.tsx             Janela por cima (Sair, Remover celular)
+│   ├── Carregando.tsx        Tela de espera (conferindo o login salvo)
 │   └── RotaProtegida.tsx     Bloqueia telas sem login
 └── telas/                Uma tela (ou grupo de telas) por arquivo
     ├── Login.tsx             01, 11, 12, 13 e 22 do Figma
@@ -67,8 +75,10 @@ src/
     ├── Inicio.tsx            02 e 20
     ├── Biometria.tsx         03, 15 e 16
     ├── QrCode.tsx            04 e 17
-    ├── TelasDeStatus.tsx     05, 06, 07, 08, 09 e 19
-    └── Perfil.tsx            10, 18 e 21
+    ├── TelasDeStatus.tsx     05, 06, 07, 08 e 09
+    ├── TrocarSenha.tsx       Criar/alterar senha (obrigatório no 1º acesso)
+    ├── Convite.tsx           Cadastrar o celular (link do QR do RH)
+    └── Perfil.tsx            10 e 21 + celulares cadastrados
 ```
 
 ## Telas e endereços
@@ -76,10 +86,12 @@ src/
 | Endereço | Tela |
 |---|---|
 | `/` | Login |
-| `/recuperar-senha` · `/recuperar-senha/enviado` | Recuperação de senha |
+| `/recuperar-senha` | Recuperação de senha (orienta procurar o RH) |
+| `/trocar-senha` | Criar/alterar senha |
+| `/convite#<token>` | Cadastrar o celular com biometria |
 | `/inicio` | Início |
-| `/biometria` | Autenticação biométrica → validando → confirmada |
-| `/qr` | QR Code (30 s; vermelho nos últimos 10 s) |
+| `/biometria` | Face ID/digital (passkey) → gera o QR no servidor |
+| `/qr` | QR Code de uso único (60 s; vermelho nos últimos 10 s) |
 | `/codigo-expirado` | Código expirado |
 | `/falha-autenticacao` | Falha na biometria |
 | `/sem-conexao` | Sem conexão |
@@ -99,7 +111,8 @@ src/
 
 ## Próximos passos
 
-- Ligar ao Supabase (login real e dados do funcionário vindos do banco).
-- Trocar a biometria simulada por passkey (WebAuthn) e o QR ilustrativo
-  pelo token de 60 s das Edge Functions.
-- Transformar em PWA (instalável no celular) com `vite-plugin-pwa`.
+- Testar em celulares reais (Android e iPhone) no endereço definitivo.
+- Antes de usar na empresa: apagar dados de teste, backup e prazo de retenção (LGPD).
+
+O banco e as Edge Functions ficam em `portaria-web/supabase/` (migrations 01 a 05,
+funções `admin-criar-operador`, `rh-acesso-funcionario` e `app-passkey`).

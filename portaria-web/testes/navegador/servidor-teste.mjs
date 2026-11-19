@@ -12,7 +12,7 @@ const jwt = require('jsonwebtoken');
 const SEGREDO = 'segredo-de-teste-com-pelo-menos-32-caracteres';
 const PORTA = 8787;
 const RAIZ = process.argv[2];
-const FUNCOES = { 'admin-criar-operador': 'http://127.0.0.1:8000', 'rh-acesso-funcionario': 'http://127.0.0.1:8001' };
+const FUNCOES = { 'admin-criar-operador': 'http://127.0.0.1:8000', 'rh-acesso-funcionario': 'http://127.0.0.1:8001', 'app-passkey': 'http://127.0.0.1:8002' };
 const pool = new pg.Pool({ host: '/tmp', port: 5433, user: 'postgres', database: 'safeaccess' });
 
 export const ANON = jwt.sign({ role: 'anon', iss: 'teste' }, SEGREDO);
@@ -224,10 +224,15 @@ async function funcoes(req, res, url) {
   const nome = url.pathname.split('/')[3];
   if (!FUNCOES[nome]) return enviar(res, 404, { msg: 'função não existe' });
   const r = await fetch(FUNCOES[nome] + '/', {
-    method: req.method, headers: { authorization: req.headers.authorization || '', 'content-type': req.headers['content-type'] || 'application/json' },
+    method: req.method, headers: { authorization: req.headers.authorization || '', 'content-type': req.headers['content-type'] || 'application/json', origin: req.headers.origin || '' },
     body: req.method === 'GET' || req.method === 'OPTIONS' ? undefined : corpo,
   });
-  res.writeHead(r.status, { 'Content-Type': r.headers.get('content-type') || 'application/json' });
+  // repassa os cabeçalhos CORS da função (o app roda em outra origem)
+  const h = { 'Content-Type': r.headers.get('content-type') || 'application/json' };
+  for (const k of ['access-control-allow-origin', 'access-control-allow-headers', 'access-control-allow-methods', 'vary']) {
+    if (r.headers.get(k)) h[k] = r.headers.get(k);
+  }
+  res.writeHead(r.status, h);
   res.end(await r.text());
 }
 

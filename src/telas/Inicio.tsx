@@ -5,7 +5,7 @@ import { Botao } from '../componentes/Botao'
 import { CardFuncionario } from '../componentes/CardFuncionario'
 import { LayoutTela } from '../componentes/LayoutTela'
 import { Mensagem } from '../componentes/Mensagem'
-import { buscarUltimosAcessos } from '../dados/funcionario'
+import { buscarUltimosAcessos, listarCelulares } from '../dados/funcionario'
 import type { Funcionario, RegistroAcesso } from '../dados/tipos'
 
 // Figma: 02 · Início — com os dados reais do funcionário
@@ -17,6 +17,7 @@ export function Inicio({ funcionario }: { funcionario: Funcionario }) {
   // null = ainda carregando
   const [acessos, setAcessos] = useState<RegistroAcesso[] | null>(null)
   const [erroAcessos, setErroAcessos] = useState(false)
+  const [semCelular, setSemCelular] = useState(false)
 
   // Busca os últimos acessos ao abrir a tela
   useEffect(() => {
@@ -24,6 +25,9 @@ export function Inicio({ funcionario }: { funcionario: Funcionario }) {
     buscarUltimosAcessos(funcionario.id)
       .then((lista) => ativo && setAcessos(lista))
       .catch(() => ativo && setErroAcessos(true))
+    listarCelulares()
+      .then((lista) => ativo && setSemCelular(lista.length === 0))
+      .catch(() => {})
     return () => {
       ativo = false // saiu da tela antes da resposta: ignora
     }
@@ -44,9 +48,15 @@ export function Inicio({ funcionario }: { funcionario: Funcionario }) {
         </p>
         <h2 className="mt-3 text-[24px] font-bold">Pronto para entrar?</h2>
         <p className="mt-1 text-[15px] text-branco/85">Confirme sua identidade e gere seu QR Code.</p>
-        <Botao className="mt-4" onClick={() => navegar('/biometria')}>
-          Solicitar acesso
-        </Botao>
+        {semCelular ? (
+          <p className="mt-4 rounded-campo bg-branco/10 p-3 text-[14px]">
+            Antes, cadastre este celular: peça ao RH o QR Code de convite.
+          </p>
+        ) : (
+          <Botao className="mt-4" onClick={() => navegar('/biometria')}>
+            Solicitar acesso
+          </Botao>
+        )}
       </section>
 
       <h2 className="mt-8 text-[20px] font-bold text-marinho">Últimos acessos</h2>

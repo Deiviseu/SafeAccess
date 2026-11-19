@@ -4,6 +4,7 @@ import { Botao } from '../componentes/Botao'
 import { CampoTexto } from '../componentes/CampoTexto'
 import { Carregando } from '../componentes/Carregando'
 import { Mensagem } from '../componentes/Mensagem'
+import { destinoDepoisDoLogin } from '../dados/convite'
 import { useSessao } from '../sessao/useSessao'
 
 /*
@@ -23,7 +24,7 @@ export function Login() {
 
   // Já está logado (login salvo no celular)? Pula o login.
   if (carregando) return <Carregando />
-  if (funcionario) return <Navigate to={precisaTrocarSenha ? '/trocar-senha' : '/inicio'} replace />
+  if (funcionario) return <Navigate to={destinoDepoisDoLogin(precisaTrocarSenha)} replace />
 
   async function enviar(evento: FormEvent) {
     evento.preventDefault() // impede o navegador de recarregar a página
@@ -35,7 +36,7 @@ export function Login() {
     setEnviando(true)
     try {
       const { precisaTrocarSenha: trocar } = await entrar(matricula, senha)
-      navegar(trocar ? '/trocar-senha' : '/inicio', { replace: true })
+      navegar(destinoDepoisDoLogin(trocar), { replace: true })
     } catch (e) {
       setErro((e as Error).message)
       setSenha('')

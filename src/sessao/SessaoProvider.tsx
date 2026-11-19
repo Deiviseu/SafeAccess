@@ -30,7 +30,6 @@ export function SessaoProvider({ children }: { children: ReactNode }) {
   const [carregando, setCarregando] = useState(true)
   const [funcionario, setFuncionario] = useState<Funcionario | null>(null)
   const [precisaTrocarSenha, setPrecisaTrocarSenha] = useState(false)
-  const [biometriaAtiva, setBiometriaAtiva] = useState(true)
 
   // Acompanha o login: ao abrir o app, ao entrar, ao sair e ao trocar a senha
   useEffect(() => {
@@ -108,11 +107,9 @@ export function SessaoProvider({ children }: { children: ReactNode }) {
         carregando,
         funcionario,
         precisaTrocarSenha,
-        biometriaAtiva,
         entrar,
         trocarSenha,
         sair,
-        alternarBiometria: () => setBiometriaAtiva((atual) => !atual),
       }}
     >
       {children}

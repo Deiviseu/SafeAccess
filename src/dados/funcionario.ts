@@ -69,3 +69,58 @@ export async function buscarUltimosAcessos(pessoaId: string, quantidade = 3): Pr
     .slice(0, quantidade)
     .map((e) => ({ id: e.id, descricao: e.descricao, quando: formatarDataHora(e.em), metodo: METODOS[e.metodo] ?? '' }))
 }
+
+// ---------------------------------------------------------------------
+// QR Code: a portaria já leu?
+// O banco grava em qr_tokens quando o QR é usado e liga à movimentação.
+// Se a entrada foi criada DEPOIS que o QR foi emitido, foi uma entrada;
+// se já existia, aquela leitura registrou a saída.
+// ---------------------------------------------------------------------
+export type LeituraQr = { tipo: 'entrada' | 'saida'; quando: string }
+
+export async function verificarLeituraDoQr(qrTokenId: string): Promise<LeituraQr | null> {
+  const { data: qr, error } = await supabase
+    .from('qr_tokens')
+    .select('emitido_em, usado_em, movimentacao_id')
+    .eq('id', qrTokenId)
+    .maybeSingle()
+  if (error) throw error
+  if (!qr?.usado_em || !qr.movimentacao_id) return null
+
+  const { data: mov, error: erroMov } = await supabase
+    .from('movimentacoes')
+    .select('entrada_em')
+    .eq('id', qr.movimentacao_id)
+    .single()
+  if (erroMov) throw erroMov
+  return { tipo: mov.entrada_em >= qr.emitido_em ? 'entrada' : 'saida', quando: qr.usado_em }
+}
+
+// ---------------------------------------------------------------------
+// Celulares cadastrados (passkeys) do próprio funcionário
+// ---------------------------------------------------------------------
+export type Celular = { id: string; nome: string; cadastradoEm: string; ultimoUso: string | null }
+
+export async function listarCelulares(): Promise<Celular[]> {
+  const { data, error } = await supabase
+    .from('credenciais_passkey')
+    .select('id, dispositivo, created_at, ultimo_uso_em')
+    .is('revogada_em', null)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data.map((c) => ({
+    id: c.id,
+    nome: c.dispositivo || 'Celular',
+    cadastradoEm: formatarDataHora(c.created_at),
+    ultimoUso: c.ultimo_uso_em ? formatarDataHora(c.ultimo_uso_em) : null,
+  }))
+}
+
+// Remove (revoga) um celular: ele deixa de gerar QR. Não dá para desfazer.
+export async function removerCelular(id: string) {
+  const { error } = await supabase
+    .from('credenciais_passkey')
+    .update({ revogada_em: new Date().toISOString() }) // o banco grava o horário dele
+    .eq('id', id)
+  if (error) throw error
+}

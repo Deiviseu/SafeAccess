@@ -1,8 +1,9 @@
 import { Check, Clock, ScanFace, WifiOff, X } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Botao } from '../componentes/Botao'
 import { CardFuncionario } from '../componentes/CardFuncionario'
 import { TelaStatus } from '../componentes/TelaStatus'
+import { formatarDataHora, type LeituraQr } from '../dados/funcionario'
 import type { Funcionario } from '../dados/tipos'
 
 /*
@@ -85,37 +86,40 @@ export function SemConexao() {
   )
 }
 
-// Cartões de funcionário + data/hora, usados nas duas telas de resultado
-function DetalhesDoAcesso({ funcionario }: { funcionario: Funcionario }) {
+// Cartões de funcionário + data/hora da leitura na portaria
+function DetalhesDoAcesso({ funcionario, quando }: { funcionario: Funcionario; quando: string }) {
   return (
     <>
       <CardFuncionario funcionario={funcionario} />
       <div className="rounded-cartao bg-branco p-4 text-center">
-        <p className="text-[17px] font-semibold text-marinho">10 nov 2026 · 07:42</p>
-        <p className="mt-1 text-[13px] text-secundario">Portaria principal · dados demonstrativos</p>
+        <p className="text-[17px] font-semibold text-marinho">{formatarDataHora(quando)}</p>
+        <p className="mt-1 text-[13px] text-secundario">Portaria · leitura do QR Code</p>
       </div>
     </>
   )
 }
 
-// Figma: 08 · Acesso validado
+// Figma: 08 · Acesso validado (chega aqui quando a portaria lê o QR)
 export function AcessoAutorizado({ funcionario }: { funcionario: Funcionario }) {
   const navegar = useNavigate()
+  const leitura = useLocation().state as LeituraQr | null
+  if (!leitura?.quando) return <Navigate to="/inicio" replace />
+  const saida = leitura.tipo === 'saida'
   return (
     <TelaStatus
       tituloTela="Resultado do acesso"
       Icone={Check}
       tom="sucesso"
-      titulo="Acesso autorizado"
-      texto="Sua identidade foi validada. Você já pode seguir para a entrada."
-      conteudo={<DetalhesDoAcesso funcionario={funcionario} />}
-      acoes={<Botao onClick={() => navegar('/inicio')}>Voltar ao início</Botao>}
+      titulo={saida ? 'Saída registrada' : 'Entrada autorizada'}
+      texto={saida ? 'Sua saída foi registrada na portaria. Até a próxima!' : 'A portaria leu seu QR Code. Você já pode seguir para a entrada.'}
+      conteudo={<DetalhesDoAcesso funcionario={funcionario} quando={leitura.quando} />}
+      acoes={<Botao onClick={() => navegar('/inicio', { replace: true })}>Voltar ao início</Botao>}
     />
   )
 }
 
 // Figma: 09 · Acesso recusado
-export function AcessoRecusado({ funcionario }: { funcionario: Funcionario }) {
+export function AcessoRecusado() {
   const navegar = useNavigate()
   return (
     <TelaStatus
@@ -123,8 +127,7 @@ export function AcessoRecusado({ funcionario }: { funcionario: Funcionario }) {
       Icone={X}
       tom="erro"
       titulo="Acesso não autorizado"
-      texto="Seu acesso está fora do horário permitido nesta demonstração. Procure a portaria."
-      conteudo={<DetalhesDoAcesso funcionario={funcionario} />}
+      texto="Seu acesso não foi liberado. Procure a equipe da portaria."
       acoes={<Botao onClick={() => navegar('/inicio')}>Voltar ao início</Botao>}
     />
   )

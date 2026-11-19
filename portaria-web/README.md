@@ -31,15 +31,17 @@ supabase/migrations/20261109000000_schema_inicial.sql      ← migration 01
 supabase/migrations/20261111000000_login_funcionario_qr.sql ← migration 02
 supabase/migrations/20261117000000_portaria_web.sql         ← migration 03
 supabase/migrations/20261118000000_funcionarios.sql         ← migration 04
+supabase/migrations/20261119000000_passkey.sql              ← migration 05 (Face ID do app)
 supabase/functions/admin-criar-operador/index.ts            ← Edge Function (operadores)
 supabase/functions/rh-acesso-funcionario/index.ts           ← Edge Function (acesso dos funcionários)
+supabase/functions/app-passkey/index.ts                     ← Edge Function (Face ID e QR do app)
 testes/                 ← testes do banco e do navegador (não publicar)
 ```
 
 ## Instalação
 
-1. **Banco:** rode as migrations da pasta `supabase/migrations` em ordem (01 → 02 → 03 → 04)
-   no SQL Editor (ou `supabase db push`). As migrations 02, 03 e 04 podem ser executadas mais de uma vez.
+1. **Banco:** rode as migrations da pasta `supabase/migrations` em ordem (01 → 02 → 03 → 04 → 05)
+   no SQL Editor (ou `supabase db push`). As migrations 02 a 05 podem ser executadas mais de uma vez.
 2. **Setores:** cadastre os setores de destino no Table Editor (tabela `setores`) ou por SQL:
    `insert into public.setores (nome) values ('Compras'), ('Produção'), ('Expedição');`
 3. **Primeiro admin:** siga a seção 7 do `GUIA_BANCO_PARA_API.md`. Em
@@ -53,6 +55,7 @@ testes/                 ← testes do banco e do navegador (não publicar)
    ```bash
    supabase functions deploy admin-criar-operador
    supabase functions deploy rh-acesso-funcionario
+   supabase functions deploy app-passkey
    # obrigatório: endereço do app do funcionário (vai no link do convite)
    supabase secrets set APP_URL=https://endereco-do-app.vercel.app
    # opcional: restringe o CORS ao seu domínio
