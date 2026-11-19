@@ -2,9 +2,8 @@ import { Check, Clock, ScanFace, WifiOff, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Botao } from '../componentes/Botao'
 import { CardFuncionario } from '../componentes/CardFuncionario'
-import { Mensagem } from '../componentes/Mensagem'
 import { TelaStatus } from '../componentes/TelaStatus'
-import type { Funcionario } from '../dados/demo'
+import type { Funcionario } from '../dados/tipos'
 
 /*
   Telas de resultado. Todas usam o molde <TelaStatus>,
@@ -127,23 +126,6 @@ export function AcessoRecusado({ funcionario }: { funcionario: Funcionario }) {
       texto="Seu acesso está fora do horário permitido nesta demonstração. Procure a portaria."
       conteudo={<DetalhesDoAcesso funcionario={funcionario} />}
       acoes={<Botao onClick={() => navegar('/inicio')}>Voltar ao início</Botao>}
-    />
-  )
-}
-
-// Figma: 19 · Recuperação enviada
-export function RecuperacaoEnviada() {
-  const navegar = useNavigate()
-  return (
-    <TelaStatus
-      tituloTela="Recuperação de acesso"
-      Icone={Check}
-      tom="sucesso"
-      corTitulo="text-marinho"
-      titulo="Orientações disponíveis"
-      texto="Em um ambiente real, você receberá as instruções pelo canal cadastrado. Se precisar de ajuda, procure o RH."
-      conteudo={<Mensagem tipo="aviso">Simulação: nenhuma mensagem foi enviada.</Mensagem>}
-      acoes={<Botao onClick={() => navegar('/')}>Voltar ao login</Botao>}
     />
   )
 }

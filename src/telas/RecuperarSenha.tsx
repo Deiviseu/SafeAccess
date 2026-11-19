@@ -1,66 +1,38 @@
-import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Botao } from '../componentes/Botao'
-import { CampoTexto } from '../componentes/CampoTexto'
 import { LayoutTela } from '../componentes/LayoutTela'
-import { Mensagem } from '../componentes/Mensagem'
-import { loginDemo } from '../dados/demo'
 
-// Figma: 14 · Recuperar senha
+/*
+  Figma: 14 · Recuperar senha.
+  O login usa um e-mail interno (nenhum e-mail é enviado), então a
+  recuperação é presencial: o RH gera uma nova senha na tela
+  "Funcionários" da portaria, e o app pede a troca no próximo acesso.
+*/
 export function RecuperarSenha() {
   const navegar = useNavigate()
-  const [matricula, setMatricula] = useState('')
-  const [erro, setErro] = useState('')
-
-  function continuar(evento: FormEvent) {
-    evento.preventDefault()
-    if (!matricula.trim()) {
-      setErro('Informe sua matrícula ou usuário.')
-      return
-    }
-    navegar('/recuperar-senha/enviado')
-  }
 
   return (
     <LayoutTela titulo="Recuperar senha">
       <h2 className="mt-2 text-[28px] font-bold text-marinho">Vamos ajudar você</h2>
       <p className="mt-3 text-[15px] leading-relaxed text-secundario">
-        Informe sua matrícula para visualizar as orientações de recuperação de acesso.
+        Para sua segurança, a senha é redefinida pessoalmente.
       </p>
 
-      <form onSubmit={continuar} noValidate className="mt-8 flex flex-1 flex-col">
-        <CampoTexto
-          rotulo="Matrícula ou usuário"
-          placeholder="Toque para preencher"
-          inputMode="numeric"
-          value={matricula}
-          onFocus={() => !matricula && setMatricula(loginDemo.matricula)}
-          onChange={(e) => {
-            setMatricula(e.target.value)
-            setErro('')
-          }}
-        />
+      <ol className="mt-6 flex flex-col gap-4 rounded-cartao bg-branco p-5 text-[15px] text-texto">
+        <li>
+          <strong className="text-marinho">1.</strong> Procure o RH com a sua matrícula.
+        </li>
+        <li>
+          <strong className="text-marinho">2.</strong> O RH gera uma senha nova para você.
+        </li>
+        <li>
+          <strong className="text-marinho">3.</strong> Entre no app com essa senha e crie a sua.
+        </li>
+      </ol>
 
-        <div className="mt-6 rounded-campo bg-info-claro p-4">
-          <p className="text-[16px] font-semibold text-institucional">Recuperação demonstrativa</p>
-          <p className="mt-2 text-[13px] leading-relaxed text-secundario">
-            Nenhum e-mail ou solicitação real será enviado. Use apenas os dados fictícios deste protótipo.
-          </p>
-        </div>
-
-        {erro && (
-          <div className="mt-4">
-            <Mensagem tipo="erro">{erro}</Mensagem>
-          </div>
-        )}
-
-        <div className="mt-auto flex flex-col gap-3 pt-10 pb-4">
-          <Botao type="submit">Continuar</Botao>
-          <Botao variante="contorno" onClick={() => navegar('/')}>
-            Voltar ao login
-          </Botao>
-        </div>
-      </form>
+      <div className="mt-auto flex flex-col gap-3 pt-10 pb-4">
+        <Botao onClick={() => navegar('/')}>Voltar ao login</Botao>
+      </div>
     </LayoutTela>
   )
 }

@@ -6,19 +6,19 @@ import { Login } from './telas/Login'
 import { Perfil } from './telas/Perfil'
 import { QrCode } from './telas/QrCode'
 import { RecuperarSenha } from './telas/RecuperarSenha'
+import { TrocarSenha } from './telas/TrocarSenha'
 import {
   AcessoAutorizado,
   AcessoRecusado,
   CodigoExpirado,
   FalhaAutenticacao,
-  RecuperacaoEnviada,
   SemConexao,
 } from './telas/TelasDeStatus'
 
 /*
   MAPA DO APP: cada endereço (path) mostra uma tela (element).
-  Fluxo principal do protótipo:
-  Login → Início → Biometria → QR Code → Resultado do acesso
+  Fluxo principal:
+  Login → (Trocar senha no 1º acesso) → Início → Biometria → QR Code → Resultado do acesso
 */
 function App() {
   return (
@@ -26,7 +26,9 @@ function App() {
       {/* Telas abertas (sem login) */}
       <Route path="/" element={<Login />} />
       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
-      <Route path="/recuperar-senha/enviado" element={<RecuperacaoEnviada />} />
+
+      {/* Logado, mas fora da RotaProtegida: é o caminho obrigatório do 1º acesso */}
+      <Route path="/trocar-senha" element={<TrocarSenha />} />
 
       {/* Telas que exigem login */}
       <Route path="/inicio" element={<RotaProtegida tela={Inicio} />} />

@@ -3,20 +3,27 @@
 App do "cartão" do funcionário do sistema de portaria da **Aços F. Sacchelli**,
 feito a partir do protótipo do Figma (*Portaria Inteligente*).
 
-> **Demonstração:** os dados são fictícios e a biometria, o QR Code e a
-> validação são **simulados**. Nada é enviado para o banco ainda.
+> **Situação:** o **login é real** (Supabase Auth, matrícula + senha criada pelo RH
+> na tela *Funcionários* da portaria), com troca de senha obrigatória no primeiro
+> acesso, dashboard e perfil com dados do banco. A **biometria e o QR Code ainda
+> são simulados** (próxima etapa: passkey + `emitir_qr_token`).
 
 ## Como rodar
 
 ```bash
 npm install     # instala as bibliotecas (só na primeira vez)
+copy .env.example .env.local   # Windows (no Linux/Mac: cp) — depois preencha a URL e a chave
 npm run dev     # abre em http://localhost:5173
 ```
 
+**Vercel:** em *Settings → Environment Variables*, cadastre `VITE_SUPABASE_URL` e
+`VITE_SUPABASE_PUBLISHABLE_KEY` e faça um novo deploy (o Vite grava os valores no build).
+
 Outros comandos: `npm run build` (gera a versão final) e `npm run lint` (procura erros).
 
-**Login de demonstração:** toque nos campos para preencher sozinho
-(matrícula `024681`, senha `demo1234`).
+**Login:** o RH cadastra o funcionário e clica em *Criar acesso* na tela
+*Funcionários* da portaria. O app entra com a **matrícula** e a **senha inicial**
+e pede para criar uma senha nova (8+ caracteres, letras e números).
 
 ## Tecnologias
 
@@ -26,6 +33,7 @@ Outros comandos: `npm run build` (gera a versão final) e `npm run lint` (procur
 | Vite | Servidor de desenvolvimento e build |
 | Tailwind CSS | Estilo direto nas classes (`bg-marinho`, `rounded-cartao`...) |
 | React Router | Troca de telas pelo endereço (`/inicio`, `/qr`...) |
+| supabase-js | Login (Supabase Auth) e leitura dos dados do funcionário |
 | qrcode.react | Desenha o QR Code |
 | lucide-react | Ícones |
 
@@ -36,7 +44,10 @@ src/
 ├── main.tsx              Ponto de partida: liga o roteador e a sessão
 ├── App.tsx               MAPA do app: qual endereço mostra qual tela
 ├── index.css             Cores, fonte e cantos do design system do Figma
-├── dados/demo.ts         Dados fictícios (funcionário, últimos acessos)
+├── servicos/supabase.ts  Conexão com o Supabase (lê o .env)
+├── dados/funcionario.ts  Consultas: dados do funcionário e últimos acessos
+├── dados/tipos.ts        Formatos dos dados (TypeScript)
+├── dados/demo.ts         O que ainda é simulado (validade do QR)
 ├── sessao/               Quem está logado (Context API)
 ├── componentes/          Peças reutilizáveis = componentes do Figma
 │   ├── Botao.tsx             Botão/Primário, Secundário e Contorno

@@ -1,41 +1,47 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { Botao } from '../componentes/Botao'
 import { CampoTexto } from '../componentes/CampoTexto'
+import { Carregando } from '../componentes/Carregando'
 import { Mensagem } from '../componentes/Mensagem'
-import { Modal } from '../componentes/Modal'
-import { funcionarioDemo, loginDemo } from '../dados/demo'
 import { useSessao } from '../sessao/useSessao'
 
 /*
-  Figma: 01 · Login, 11 · Login preenchido, 12 · Senha visível,
-         13 · Login inválido e 22 · Ajuda de acesso.
-  As quatro primeiras são a MESMA tela em estados diferentes —
-  no React isso é só uma questão de valores no useState.
+  Figma: 01 · Login, 11 · Login preenchido, 12 · Senha visível e 13 · Login inválido.
+  Agora o login é real (Supabase Auth): a matrícula vira o e-mail interno
+  <matricula>@funcionarios.sacchelli.com.br, igual ao criado pelo RH na portaria.
 */
 export function Login() {
   const navegar = useNavigate()
-  const { entrar } = useSessao()
+  const { carregando, funcionario, precisaTrocarSenha, entrar } = useSessao()
 
   // Estado = valores que mudam e fazem a tela se redesenhar
   const [matricula, setMatricula] = useState('')
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState('')
-  const [ajudaAberta, setAjudaAberta] = useState(false)
+  const [enviando, setEnviando] = useState(false)
 
-  function enviar(evento: FormEvent) {
+  // Já está logado (login salvo no celular)? Pula o login.
+  if (carregando) return <Carregando />
+  if (funcionario) return <Navigate to={precisaTrocarSenha ? '/trocar-senha' : '/inicio'} replace />
+
+  async function enviar(evento: FormEvent) {
     evento.preventDefault() // impede o navegador de recarregar a página
 
-    if (!matricula || !senha) {
+    if (!matricula.trim() || !senha) {
       setErro('Preencha a matrícula e a senha.')
       return
     }
-    if (matricula !== loginDemo.matricula || senha !== loginDemo.senha) {
-      setErro('Matrícula ou senha inválida.')
-      return
+    setEnviando(true)
+    try {
+      const { precisaTrocarSenha: trocar } = await entrar(matricula, senha)
+      navegar(trocar ? '/trocar-senha' : '/inicio', { replace: true })
+    } catch (e) {
+      setErro((e as Error).message)
+      setSenha('')
+    } finally {
+      setEnviando(false)
     }
-    entrar(funcionarioDemo)
-    navegar('/inicio')
   }
 
   return (
@@ -52,17 +58,16 @@ export function Login() {
 
       <main className="flex-1 px-6 pt-6">
         <h1 className="text-[26px] font-bold text-marinho">Bem-vindo de volta</h1>
-        <p className="mt-1 text-[15px] text-secundario">Entre com seus dados corporativos.</p>
+        <p className="mt-1 text-[15px] text-secundario">Entre com sua matrícula e senha.</p>
 
         <form onSubmit={enviar} noValidate className="mt-6 flex flex-col gap-4">
           <CampoTexto
-            rotulo="Matrícula ou usuário"
-            placeholder="Toque para preencher"
+            rotulo="Matrícula"
+            placeholder="Sua matrícula"
             autoComplete="username"
-            inputMode="numeric"
+            autoCapitalize="none"
+            spellCheck={false}
             value={matricula}
-            // Demonstração: ao tocar no campo vazio, preenche sozinho
-            onFocus={() => !matricula && setMatricula(loginDemo.matricula)}
             onChange={(e) => {
               setMatricula(e.target.value)
               setErro('')
@@ -74,7 +79,6 @@ export function Login() {
             placeholder="••••••••"
             autoComplete="current-password"
             value={senha}
-            onFocus={() => !senha && setSenha(loginDemo.senha)}
             onChange={(e) => {
               setSenha(e.target.value)
               setErro('')
@@ -85,37 +89,18 @@ export function Login() {
             Esqueci minha senha
           </Link>
 
-          <Botao type="submit" className="mt-3">
-            Entrar
+          <Botao type="submit" className="mt-3" disabled={enviando}>
+            {enviando ? 'Entrando…' : 'Entrar'}
           </Botao>
 
           {/* Renderização condicional: só aparece se houver erro */}
-          {erro ? (
-            <Mensagem tipo="erro">{erro}</Mensagem>
-          ) : (
-            <p className="text-center text-[12px] text-secundario">
-              Toque nos campos para usar dados de demonstração.
-            </p>
-          )}
+          {erro && <Mensagem tipo="erro">{erro}</Mensagem>}
         </form>
       </main>
 
-      <footer className="py-8 text-center">
-        <button type="button" onClick={() => setAjudaAberta(true)} className="text-[13px] text-secundario">
-          Como testar este protótipo
-        </button>
+      <footer className="px-6 py-8 text-center">
+        <p className="text-[13px] text-secundario">Primeiro acesso? Use a matrícula e a senha que o RH entregou.</p>
       </footer>
-
-      <Modal
-        aberto={ajudaAberta}
-        onFechar={() => setAjudaAberta(false)}
-        titulo="Como testar o acesso"
-        descricao="Toque nos campos do login para preencher os dados fictícios. Use “Cenários” para explorar erros, expiração e validação. Nenhuma informação é enviada."
-      >
-        <Botao variante="contorno" onClick={() => setAjudaAberta(false)}>
-          Entendi
-        </Botao>
-      </Modal>
     </div>
   )
 }

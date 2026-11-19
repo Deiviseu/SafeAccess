@@ -5,7 +5,7 @@ import { Botao } from '../componentes/Botao'
 import { CardFuncionario } from '../componentes/CardFuncionario'
 import { LayoutTela } from '../componentes/LayoutTela'
 import { ModalCenarios } from '../componentes/ModalCenarios'
-import type { Funcionario } from '../dados/demo'
+import type { Funcionario } from '../dados/tipos'
 
 /*
   Figma: 03 · Autenticação biométrica, 15 · Validando identidade

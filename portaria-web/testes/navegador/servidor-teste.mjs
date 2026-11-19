@@ -18,12 +18,19 @@ const pool = new pg.Pool({ host: '/tmp', port: 5433, user: 'postgres', database:
 export const ANON = jwt.sign({ role: 'anon', iss: 'teste' }, SEGREDO);
 export const SERVICE = jwt.sign({ role: 'service_role', iss: 'teste' }, SEGREDO);
 const senhas = new Map(); // email -> senha (fake)
+const metadados = new Map(); // id -> user_metadata
 const log = [];
 
 const tipos = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml' };
 
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info, prefer, accept-profile, content-profile, x-supabase-api-version, range',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  'Access-Control-Expose-Headers': 'Content-Range',
+};
 function enviar(res, status, corpo, extra = {}) {
-  const h = { 'Content-Type': 'application/json', ...extra };
+  const h = { 'Content-Type': 'application/json', ...CORS, ...extra };
   res.writeHead(status, h);
   res.end(corpo === undefined ? '' : JSON.stringify(corpo));
 }
@@ -149,7 +156,7 @@ async function rest(req, res, url, claims) {
 }
 
 function usuarioJson(u) {
-  return { id: u.id, aud: 'authenticated', role: 'authenticated', email: u.email, app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString(), last_sign_in_at: u.last_sign_in_at };
+  return { id: u.id, aud: 'authenticated', role: 'authenticated', email: u.email, app_metadata: {}, user_metadata: metadados.get(u.id) || {}, created_at: new Date().toISOString(), last_sign_in_at: u.last_sign_in_at };
 }
 
 async function auth(req, res, url) {
@@ -167,6 +174,16 @@ async function auth(req, res, url) {
     return u ? enviar(res, 200, sessao(u)) : enviar(res, 400, { msg: 'Invalid Refresh Token' });
   }
   const claims = claimsDe(req);
+  if (rota === 'user' && req.method === 'PUT') {
+    if (!claims || !claims.sub) return enviar(res, 401, { msg: 'invalid JWT' });
+    const u = (await pool.query('select id, email, last_sign_in_at from auth.users where id = $1', [claims.sub])).rows[0];
+    if (corpo.password) {
+      if (senhas.get(u.email) === corpo.password) return enviar(res, 422, { code: 'same_password', msg: 'New password should be different from the old password.' });
+      senhas.set(u.email, corpo.password);
+    }
+    if (corpo.data) metadados.set(u.id, { ...(metadados.get(u.id) || {}), ...corpo.data });
+    return enviar(res, 200, usuarioJson(u));
+  }
   if (rota === 'user') {
     if (!claims || !claims.sub) return enviar(res, 401, { msg: 'invalid JWT' });
     const u = (await pool.query('select id, email, last_sign_in_at from auth.users where id = $1', [claims.sub])).rows[0];
@@ -180,6 +197,7 @@ async function auth(req, res, url) {
       try {
         const u = (await pool.query('insert into auth.users (email) values ($1) returning id, email', [email])).rows[0];
         senhas.set(email, corpo.password);
+        if (corpo.user_metadata) metadados.set(u.id, corpo.user_metadata);
         return enviar(res, 200, usuarioJson(u));
       } catch { return enviar(res, 422, { code: 'email_exists', msg: 'A user with this email address has already been registered' }); }
     }
@@ -187,6 +205,7 @@ async function auth(req, res, url) {
       const u = (await pool.query('select id, email from auth.users where id = $1', [rota.split('/')[2]])).rows[0];
       if (!u) return enviar(res, 404, { msg: 'User not found' });
       if (corpo.password) senhas.set(u.email, corpo.password);
+      if (corpo.user_metadata) metadados.set(u.id, { ...(metadados.get(u.id) || {}), ...corpo.user_metadata });
       return enviar(res, 200, usuarioJson(u));
     }
     if (req.method === 'DELETE') { await pool.query('delete from auth.users where id = $1', [rota.split('/')[2]]); return enviar(res, 200, {}); }
@@ -215,6 +234,7 @@ async function funcoes(req, res, url) {
 http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://127.0.0.1');
   log.push(`${req.method} ${url.pathname}${url.search}`);
+  if (req.method === 'OPTIONS' && !url.pathname.startsWith('/functions/')) { res.writeHead(204, CORS); return res.end(); }
   try {
     if (url.pathname === '/__log') return enviar(res, 200, log);
     if (url.pathname.startsWith('/rest/v1/')) {

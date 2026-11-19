@@ -5,7 +5,7 @@ import { Botao } from '../componentes/Botao'
 import { LayoutTela } from '../componentes/LayoutTela'
 import { Mensagem } from '../componentes/Mensagem'
 import { Modal } from '../componentes/Modal'
-import type { Funcionario } from '../dados/demo'
+import type { Funcionario } from '../dados/tipos'
 import { useSessao } from '../sessao/useSessao'
 
 /*
@@ -18,13 +18,13 @@ export function Perfil({ funcionario }: { funcionario: Funcionario }) {
   const [confirmarSaida, setConfirmarSaida] = useState(false)
 
   const dados = [
-    { rotulo: 'Setor', valor: funcionario.setor },
-    { rotulo: 'Unidade', valor: funcionario.unidade },
-    { rotulo: 'Conta', valor: 'Funcionário · demonstração' },
+    { rotulo: 'Matrícula', valor: funcionario.matricula },
+    { rotulo: 'Setor', valor: funcionario.setor || 'Não informado' },
+    { rotulo: 'Conta', valor: 'Funcionário' },
   ]
 
-  function sairDaConta() {
-    sair()
+  async function sairDaConta() {
+    await sair()
     navegar('/', { replace: true })
   }
 
@@ -52,7 +52,7 @@ export function Perfil({ funcionario }: { funcionario: Funcionario }) {
         ))}
       </dl>
 
-      {/* Interruptor da biometria */}
+      {/* Interruptor da biometria (ainda simulado: vira real com a passkey) */}
       <button
         type="button"
         role="switch"
@@ -79,7 +79,10 @@ export function Perfil({ funcionario }: { funcionario: Funcionario }) {
         </span>
       </button>
 
-      <Botao variante="contorno" className="mt-6" onClick={() => setConfirmarSaida(true)}>
+      <Botao variante="contorno" className="mt-6" onClick={() => navegar('/trocar-senha')}>
+        Alterar senha
+      </Botao>
+      <Botao variante="contorno" className="mt-3" onClick={() => setConfirmarSaida(true)}>
         Sair da conta
       </Botao>
 
@@ -87,7 +90,7 @@ export function Perfil({ funcionario }: { funcionario: Funcionario }) {
         aberto={confirmarSaida}
         onFechar={() => setConfirmarSaida(false)}
         titulo="Sair da conta?"
-        descricao="Você poderá entrar novamente com seus dados de demonstração."
+        descricao="Para entrar de novo, use sua matrícula e senha."
       >
         <Botao variante="secundario" onClick={sairDaConta}>
           Sair

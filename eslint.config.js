@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'portaria-web']), // a portaria é outro projeto (JS puro, sem build)
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

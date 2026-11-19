@@ -4,7 +4,8 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Botao } from '../componentes/Botao'
 import { LayoutTela } from '../componentes/LayoutTela'
 import { ModalCenarios } from '../componentes/ModalCenarios'
-import { VALIDADE_QR_SEGUNDOS, type Funcionario } from '../dados/demo'
+import { VALIDADE_QR_SEGUNDOS } from '../dados/demo'
+import type { Funcionario } from '../dados/tipos'
 
 /*
   Figma: 04 · QR Code de acesso e 17 · QR Code · Últimos segundos.
