@@ -27,6 +27,9 @@
     mov_textos_tamanho: 'Texto muito longo em pessoa visitada, motivo ou observação.',
     pessoas_textos_tamanho: 'Texto muito longo em empresa ou observação.',
     usuarios_nome_valido: 'O nome deve ter entre 3 e 120 caracteres.',
+    pessoas_matricula_unica: 'Já existe um funcionário com esta matrícula.',
+    pessoas_matricula_formato: 'Matrícula inválida: use só letras, números, ponto, hífen ou sublinhado (até 30).',
+    pessoas_func_matricula: 'Informe a matrícula do funcionário.',
   };
 
   function traduzir(error) {
@@ -200,6 +203,44 @@
         if (bloco.length < 1000) break;
       }
       return todas;
+    },
+
+    // ---------- funcionários (RH/admin) ----------
+    funcionarios: () => exec(sb.rpc('listar_funcionarios')),
+
+    criarFuncionario: f => exec(sb.from('pessoas').insert({
+      tipo: 'funcionario',
+      nome: f.nome,
+      matricula: f.matricula,
+      setor_id: f.setorId || null,
+      documento_tipo: f.cpf ? 'cpf' : null,
+      documento: f.cpf || null,
+    }).select('id').single()),
+
+    async atualizarFuncionario(id, campos) {
+      const linhas = await exec(sb.from('pessoas').update(campos).eq('id', id).select('id'));
+      if (!linhas.length) throw new ErroApi('Você não tem permissão para alterar este funcionário.');
+    },
+
+    aparelhos: pessoaId => exec(sb.from('credenciais_passkey')
+      .select('id,dispositivo,created_at,ultimo_uso_em,revogada_em')
+      .eq('pessoa_id', pessoaId).order('created_at', { ascending: false })),
+
+    async revogarAparelho(id) {
+      // o horário é gravado pelo servidor; revogação não pode ser desfeita
+      const linhas = await exec(sb.from('credenciais_passkey').update({ revogada_em: new Date().toISOString() }).eq('id', id).select('id'));
+      if (!linhas.length) throw new ErroApi('Você não tem permissão para revogar este celular.');
+    },
+
+    // acao: 'criar' | 'novo_convite' | 'redefinir_senha'
+    async acessoFuncionario(acao, pessoaId) {
+      const { data, error } = await sb.functions.invoke('rh-acesso-funcionario', { body: { acao, pessoa_id: pessoaId } });
+      if (error) {
+        let msg = null;
+        try { msg = (await error.context.json()).erro; } catch { /* resposta sem JSON */ }
+        throw new ErroApi(msg || 'Não foi possível concluir. Verifique se a função rh-acesso-funcionario foi publicada.');
+      }
+      return data;
     },
 
     // ---------- operadores (admin) ----------

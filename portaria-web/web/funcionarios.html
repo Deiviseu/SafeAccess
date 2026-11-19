@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
+<title>Funcionários · SafeAccess Sacchelli</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="funcionarios">
+<div class="shell"><aside class="side" id="side"></aside><div class="conteudo"><header class="top" id="top"></header>
+<main id="main" hidden>
+<section class="stats">
+  <div class="card stat"><span class="muted">Funcionários ativos</span><strong id="s-ativos">–</strong></div>
+  <div class="card stat"><span class="muted">Com acesso ao app</span><strong id="s-login">–</strong></div>
+  <div class="card stat"><span class="muted">Com celular cadastrado</span><strong id="s-celular">–</strong></div>
+  <div class="card stat" id="s-aguardando-card"><span class="muted">Aguardando celular</span><strong id="s-aguardando">–</strong></div>
+</section>
+
+<section class="card">
+  <h2>Funcionários</h2>
+  <div class="toolbar">
+    <input class="grow" id="q" type="search" placeholder="Buscar por nome ou matrícula" aria-label="Buscar por nome ou matrícula">
+    <select id="f-setor" aria-label="Filtrar por setor"><option value="">Todos os setores</option></select>
+    <select id="f-situacao" aria-label="Filtrar por situação">
+      <option value="">Todas as situações</option>
+      <option value="sem_login">Sem acesso ao app</option>
+      <option value="aguardando">Aguardando celular</option>
+      <option value="celular">Com celular cadastrado</option>
+      <option value="inativo">Inativos</option>
+    </select>
+    <button class="btn btn-primary" id="novo" type="button">Novo funcionário</button>
+  </div>
+  <div class="scroll"><table>
+    <thead><tr><th>Funcionário</th><th>Setor</th><th>Acesso ao app</th><th>Último acesso ao app</th><th><span class="sr">Ações</span></th></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table></div>
+  <div class="pager"><span class="muted" id="info" role="status"></span><div><button class="btn" id="prev" type="button">Anterior</button><button class="btn" id="next" type="button">Próxima</button></div></div>
+</section>
+
+<!-- Novo funcionário -->
+<dialog id="dlg-novo" aria-labelledby="dlg-novo-t">
+  <form id="form-novo" novalidate>
+    <h2 id="dlg-novo-t">Novo funcionário</h2>
+    <label>Nome completo<input name="nome" required maxlength="150" autocomplete="off"></label>
+    <label>Matrícula<input name="matricula" required maxlength="30" autocomplete="off"></label>
+    <label>Setor<select name="setorId" class="sel-setor"><option value="">Não informado</option></select></label>
+    <label>CPF (opcional)<input name="cpf" id="novo-cpf" inputmode="numeric" maxlength="14" autocomplete="off"></label>
+    <label class="check"><input type="checkbox" name="criarAcesso" checked> Criar acesso ao app agora</label>
+    <p class="msg" id="msg-novo" role="alert"></p>
+    <div class="actions"><button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-primary" type="submit">Cadastrar</button></div>
+  </form>
+</dialog>
+
+<!-- Gerenciar funcionário -->
+<dialog id="dlg-func" aria-labelledby="dlg-func-t">
+  <form id="form-func" novalidate>
+    <div><h2 id="dlg-func-t"></h2><div class="muted" id="func-sub"></div></div>
+    <label>Nome completo<input name="nome" id="func-nome" required maxlength="150" autocomplete="off"></label>
+    <label>Setor<select name="setorId" id="func-setor" class="sel-setor"><option value="">Não informado</option></select></label>
+    <label class="check"><input type="checkbox" name="ativo" id="func-ativo"> Cadastro ativo</label>
+    <p class="muted">Funcionário inativo não consegue gerar QR nem passar pela portaria.</p>
+    <p class="msg" id="msg-func" role="alert"></p>
+    <div class="actions"><button class="btn btn-primary" type="submit">Salvar alterações</button></div>
+
+    <section class="bloco">
+      <h3>Acesso ao app</h3>
+      <p id="func-acesso" class="muted"></p>
+      <div class="acoes-esq" id="func-botoes"></div>
+    </section>
+
+    <section class="bloco">
+      <h3>Celulares cadastrados</h3>
+      <ul class="recent" id="func-aparelhos"></ul>
+    </section>
+
+    <div class="actions"><button class="btn" type="button" data-fechar>Fechar</button></div>
+  </form>
+</dialog>
+
+<!-- Resultado: senha e convite (aparece uma vez) -->
+<dialog id="dlg-acesso" aria-labelledby="dlg-acesso-t">
+  <div class="dialogo">
+    <h2 id="dlg-acesso-t"></h2>
+    <div id="acesso-quem" class="muted"></div>
+    <div class="dados-acesso" id="acesso-login" hidden>
+      <div><span class="muted">Matrícula</span><strong id="acesso-matricula"></strong></div>
+      <div><span class="muted">Senha inicial</span><strong class="senha" id="acesso-senha"></strong></div>
+      <p class="aviso-senha">Anote agora: esta senha não será mostrada de novo. O app pede para trocar no primeiro acesso.</p>
+    </div>
+    <div id="acesso-convite" hidden>
+      <h3>Cadastrar o celular</h3>
+      <p class="muted">Peça para o funcionário ler este QR Code com a câmera do celular. Ele abre o app para cadastrar a digital ou o rosto.</p>
+      <div class="qr-convite"><img id="acesso-qr" alt="QR Code do convite para cadastrar o celular"></div>
+      <div class="linha-link"><input id="acesso-link" readonly aria-label="Link do convite"><button class="btn btn-sm" id="acesso-copiar" type="button">Copiar link</button></div>
+      <p class="muted" id="acesso-expira"></p>
+    </div>
+    <div class="actions"><button class="btn btn-primary" type="button" id="acesso-ok">Já anotei, fechar</button></div>
+  </div>
+</dialog>
+</main></div></div>
+<script src="vendor/supabase.js"></script>
+<script src="vendor/qrcode-generator.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/comum.js"></script>
+<script src="js/funcionarios.js"></script>
+</body>
+</html>

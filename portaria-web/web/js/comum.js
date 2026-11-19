@@ -80,6 +80,7 @@ const PAGINAS = {
   leitor: { titulo: 'Portaria', desc: 'Leitura do QR Code, registro manual e pessoas dentro da empresa.', href: 'leitor.html' },
   visitante: { titulo: 'Registrar Visitante', desc: 'Cadastre visitantes, prestadores e fornecedores e registre a entrada.', href: 'visitante.html' },
   logs: { titulo: 'Histórico de Acessos', desc: 'Consulte, filtre e exporte as movimentações da portaria.', href: 'logs.html' },
+  funcionarios: { titulo: 'Funcionários', desc: 'Cadastre funcionários e libere o acesso pelo app do celular.', href: 'funcionarios.html', perfis: ['admin', 'rh'] },
   usuarios: { titulo: 'Operadores', desc: 'Gerencie quem acessa o sistema e com qual perfil.', href: 'usuarios.html', perfis: ['admin'] },
 };
 

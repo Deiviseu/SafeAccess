@@ -12,6 +12,7 @@ Os dados ficam no Supabase, e as regras de negócio ficam no banco.
 | `leitor.html` | todos | Leitura do QR pela câmera, registro manual (busca por nome, matrícula ou documento) e lista de quem está **dentro agora**, com saída em dois cliques. |
 | `visitante.html` | todos | Cadastro de visitante, prestador ou fornecedor e registro da entrada. Se o documento já existe, o cadastro é reaproveitado. |
 | `logs.html` | todos | Histórico com filtros no servidor, paginação, resumo do dia e exportação CSV **sem documento**. |
+| `funcionarios.html` | RH, admin | Cadastro de funcionários e liberação do acesso ao app: senha inicial, convite com QR para cadastrar o celular, novo convite, redefinir senha e revogar celular. |
 | `usuarios.html` | admin | Lista de operadores com e-mail e último acesso, criação, troca de perfil e ativação/desativação. |
 
 ## Estrutura
@@ -26,16 +27,19 @@ web/                    ← SÓ esta pasta vai para a hospedagem
   js/leitor-qr.js       ← câmera + leitura de QR (jsQR; nativo quando existir)
   js/<tela>.js          ← lógica de cada tela
   vendor/               ← supabase-js 2.119.0 e jsQR 1.4.0 (locais, sem CDN)
-supabase/migrations/20261117000000_portaria_web.sql   ← migration 03
-supabase/functions/admin-criar-operador/index.ts       ← Edge Function
+supabase/migrations/20261109000000_schema_inicial.sql      ← migration 01
+supabase/migrations/20261111000000_login_funcionario_qr.sql ← migration 02
+supabase/migrations/20261117000000_portaria_web.sql         ← migration 03
+supabase/migrations/20261118000000_funcionarios.sql         ← migration 04
+supabase/functions/admin-criar-operador/index.ts            ← Edge Function (operadores)
+supabase/functions/rh-acesso-funcionario/index.ts           ← Edge Function (acesso dos funcionários)
 testes/                 ← testes do banco e do navegador (não publicar)
 ```
 
 ## Instalação
 
-1. **Banco:** com as migrations 01 e 02 já aplicadas, rode a
-   `supabase/migrations/20261117000000_portaria_web.sql` no SQL Editor (ou `supabase db push`).
-   Ela pode ser executada mais de uma vez.
+1. **Banco:** rode as migrations da pasta `supabase/migrations` em ordem (01 → 02 → 03 → 04)
+   no SQL Editor (ou `supabase db push`). As migrations 02, 03 e 04 podem ser executadas mais de uma vez.
 2. **Setores:** cadastre os setores de destino no Table Editor (tabela `setores`) ou por SQL:
    `insert into public.setores (nome) values ('Compras'), ('Produção'), ('Expedição');`
 3. **Primeiro admin:** siga a seção 7 do `GUIA_BANCO_PARA_API.md`. Em
@@ -45,9 +49,12 @@ testes/                 ← testes do banco e do navegador (não publicar)
    porque quem protege os dados é o RLS. **Nunca** coloque ali a secret key ou a service_role.
    O Supabase está substituindo as chaves `anon` e `service_role` pelas novas.
    A anon ainda funciona, mas use a publicável.
-5. **Edge Function** (para o botão "Novo operador"):
+5. **Edge Functions** ("Novo operador" e acesso dos funcionários):
    ```bash
    supabase functions deploy admin-criar-operador
+   supabase functions deploy rh-acesso-funcionario
+   # obrigatório: endereço do app do funcionário (vai no link do convite)
+   supabase secrets set APP_URL=https://endereco-do-app.vercel.app
    # opcional: restringe o CORS ao seu domínio
    supabase secrets set ORIGENS_PERMITIDAS=https://safeaccess-portaria.vercel.app
    ```

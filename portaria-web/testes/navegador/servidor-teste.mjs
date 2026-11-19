@@ -12,7 +12,7 @@ const jwt = require('jsonwebtoken');
 const SEGREDO = 'segredo-de-teste-com-pelo-menos-32-caracteres';
 const PORTA = 8787;
 const RAIZ = process.argv[2];
-const FUNCOES = 'http://127.0.0.1:8000';
+const FUNCOES = { 'admin-criar-operador': 'http://127.0.0.1:8000', 'rh-acesso-funcionario': 'http://127.0.0.1:8001' };
 const pool = new pg.Pool({ host: '/tmp', port: 5433, user: 'postgres', database: 'safeaccess' });
 
 export const ANON = jwt.sign({ role: 'anon', iss: 'teste' }, SEGREDO);
@@ -104,7 +104,8 @@ async function rest(req, res, url, claims) {
     const params = [], where = [];
     let colunas = '*', ordem = [], limite = null, offset = null;
     for (const [k, v] of url.searchParams) {
-      if (k === 'select') colunas = v.split(',').map(ident).join(', ');
+      if (k === 'columns') continue;
+      else if (k === 'select') colunas = v.split(',').map(ident).join(', ');
       else if (k === 'order') ordem = v.split(',').map(o => { const [c, d] = o.split('.'); return `${ident(c)} ${d === 'desc' ? 'desc' : 'asc'}`; });
       else if (k === 'limit') limite = Number(v);
       else if (k === 'offset') offset = Number(v);
@@ -136,10 +137,12 @@ async function rest(req, res, url, claims) {
       return enviar(res, 200, r.rows);
     }
     if (req.method === 'POST') {
-      const ks = Object.keys(corpo);
-      const sql = `insert into public.${tabela} (${ks.map(ident).join(', ')}) values (${ks.map((_, i) => '$' + (i + 1)).join(', ')})`;
-      await comoUsuario(claims, c => c.query(sql, ks.map(k => corpo[k])));
-      return enviar(res, 201, undefined);
+      const ks = Object.keys(corpo), sel = url.searchParams.get('select');
+      const sql = `insert into public.${tabela} (${ks.map(ident).join(', ')}) values (${ks.map((_, i) => '$' + (i + 1)).join(', ')})`
+        + (sel ? ' returning ' + colunas : '');
+      const r = await comoUsuario(claims, c => c.query(sql, ks.map(k => corpo[k])));
+      if (!sel) return enviar(res, 201, undefined);
+      return enviar(res, 201, /vnd\.pgrst\.object/.test(req.headers.accept || '') ? r.rows[0] : r.rows);
     }
     enviar(res, 405, { message: 'método não suportado' });
   } catch (e) { erroPg(res, e, claims); }
@@ -180,6 +183,12 @@ async function auth(req, res, url) {
         return enviar(res, 200, usuarioJson(u));
       } catch { return enviar(res, 422, { code: 'email_exists', msg: 'A user with this email address has already been registered' }); }
     }
+    if (req.method === 'PUT') {
+      const u = (await pool.query('select id, email from auth.users where id = $1', [rota.split('/')[2]])).rows[0];
+      if (!u) return enviar(res, 404, { msg: 'User not found' });
+      if (corpo.password) senhas.set(u.email, corpo.password);
+      return enviar(res, 200, usuarioJson(u));
+    }
     if (req.method === 'DELETE') { await pool.query('delete from auth.users where id = $1', [rota.split('/')[2]]); return enviar(res, 200, {}); }
   }
   enviar(res, 404, { msg: 'rota de auth não simulada: ' + rota });
@@ -193,7 +202,9 @@ function sessao(u) {
 
 async function funcoes(req, res, url) {
   const corpo = await lerCorpo(req);
-  const r = await fetch(FUNCOES + url.pathname.replace('/functions/v1', ''), {
+  const nome = url.pathname.split('/')[3];
+  if (!FUNCOES[nome]) return enviar(res, 404, { msg: 'função não existe' });
+  const r = await fetch(FUNCOES[nome] + '/', {
     method: req.method, headers: { authorization: req.headers.authorization || '', 'content-type': req.headers['content-type'] || 'application/json' },
     body: req.method === 'GET' || req.method === 'OPTIONS' ? undefined : corpo,
   });
